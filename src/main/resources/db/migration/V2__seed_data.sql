@@ -32,3 +32,17 @@ INSERT INTO sys_user_role (user_id, role_id, tenant_id) VALUES (1, 1, 1);
 -- 角色权限关联：ADMIN 拥有所有权限
 INSERT INTO sys_role_permission (role_id, permission_id, tenant_id)
 SELECT 1, id, 1 FROM sys_permission;
+
+-- LEADER 角色权限：AI员工管理 / 知识库 / 客服管理 / IM工作台 / 数据看板（团队范围）
+INSERT INTO sys_role_permission (role_id, permission_id, tenant_id)
+SELECT 2, id, 1 FROM sys_permission WHERE permission_code IN (
+    'ai_employee:menu', 'ai_employee:view', 'ai_employee:edit',
+    'knowledge:menu', 'knowledge:view', 'knowledge:edit',
+    'agent:menu', 'agent:view', 'agent:edit',
+    'im:access',
+    'dashboard:view'
+);
+
+-- AGENT 角色权限：仅IM工作台
+INSERT INTO sys_role_permission (role_id, permission_id, tenant_id)
+SELECT 3, id, 1 FROM sys_permission WHERE permission_code = 'im:access';
