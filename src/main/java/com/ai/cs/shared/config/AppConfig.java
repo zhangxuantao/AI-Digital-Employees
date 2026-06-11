@@ -2,10 +2,10 @@ package com.ai.cs.shared.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@Configuration
 @ConfigurationProperties(prefix = "app")
 public class AppConfig {
     private Storage storage = new Storage();
