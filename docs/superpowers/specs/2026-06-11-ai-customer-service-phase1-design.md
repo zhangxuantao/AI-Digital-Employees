@@ -112,7 +112,7 @@ com.ai.cs
 
 ## 3. 数据模型设计
 
-### 3.1 MySQL 核心表（18 张）
+### 3.1 MySQL 核心表（21 张）
 
 #### AI 员工表组
 
@@ -216,6 +216,7 @@ com.ai.cs
 | customer_id | BIGINT FK | 关联 customer_profile.id |
 | employee_id | BIGINT FK | 关联 ai_employee.id |
 | human_agent_id | BIGINT FK | 转人工后关联 human_agent.id（可为空） |
+| owner_agent_id | BIGINT FK | 负责该会话的客服 ID（分配后写入，用于数据隔离） |
 | channel | VARCHAR(20) | 渠道: WEB/XIAOHONGSHU |
 | status | VARCHAR(20) | AI_ACTIVE/WAITING/HUMAN/QUEUED/CLOSED |
 | start_time | DATETIME | 会话开始时间 |
@@ -305,6 +306,43 @@ com.ai.cs
 | agent_id | BIGINT FK | 关联 human_agent.id |
 | platform | VARCHAR(20) | 有权限的平台 |
 | employee_id | BIGINT FK | 有权限服务的 AI 员工 |
+| tenant_id | BIGINT | [预留] |
+
+#### 权限管理表组
+
+**sys_user** — 系统用户（扩展 human_agent）
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT PK | 主键 |
+| username | VARCHAR(100) | 登录用户名 |
+| password_hash | VARCHAR(200) | 密码哈希 |
+| agent_id | BIGINT FK | 关联 human_agent.id（客服角色时绑定） |
+| role_code | VARCHAR(20) | 角色: ADMIN/LEADER/AGENT |
+| status | VARCHAR(20) | ENABLED/DISABLED |
+| tenant_id | BIGINT | [预留] |
+
+**sys_permission** — 菜单/权限定义
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT PK | 主键 |
+| parent_id | BIGINT | 父级权限 ID（树形结构） |
+| name | VARCHAR(100) | 权限名称 |
+| type | VARCHAR(10) | MENU/BUTTON/API |
+| path | VARCHAR(200) | 前端路由路径 或 后端 API 路径 |
+| permission_code | VARCHAR(100) | 权限码，如 `ai_employee:view` |
+| icon | VARCHAR(50) | 菜单图标（仅 MENU 类型） |
+| sort_order | INT | 排序号 |
+| tenant_id | BIGINT | [预留] |
+
+**sys_user_role** — 用户-角色关联
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | BIGINT PK | 主键 |
+| user_id | BIGINT FK | 关联 sys_user.id |
+| role_code | VARCHAR(20) | 角色编码 |
 | tenant_id | BIGINT | [预留] |
 
 ### 3.2 Elasticsearch 索引
@@ -664,12 +702,73 @@ Phase 1 三块看板（读操作，不做实时流计算）：
 ### 10.1 安全
 
 - **认证**：Spring Security + JWT（管理后台登录），WebSocket 通过 ticket 认证
-- **权限**：RBAC 细粒度控制（客服仅见自己会话，主管见团队，管理员见全部）
 - **数据加密**：敏感信息（手机号、身份证号）AES-256 加密存储，展示脱敏
 - **操作审计**：关键操作（分配/转接/数据导出）写入 `audit_log` 表完整留痕
-- **客户隐私**：`conversation` + `message` 查询按 `agent_id` 过滤
 
-### 10.2 性能
+### 10.2 客户隐私隔离
+
+客服**仅可见分配给自己的会话信息**，无权查看其他客服的客户数据。实现方案：
+
+**数据层隔离**：
+- `conversation` 表增加 `owner_agent_id` 字段，分配后写入
+- 所有会话查询统一加 `WHERE owner_agent_id = :currentAgentId`，在 Repository 层通过 Spring Data JPA 的 `@Query` 注解强制过滤
+- 切面层兜底：自定义 `@DataScope` 注解 + AOP 自动注入 `owner_agent_id` 条件，防止开发遗漏
+
+```
+数据可见性规则：
+┌──────────────┬────────────────────────────────┐
+│ 角色          │ 可见范围                        │
+├──────────────┼────────────────────────────────┤
+│ 客服 (AGENT)  │ 仅 owner_agent_id = 自己的会话   │
+│ 主管 (LEADER) │ 团队内所有客服的会话              │
+│ 管理员 (ADMIN)│ 全部会话                         │
+└──────────────┴────────────────────────────────┘
+```
+
+**IM 工作台导航过滤**：
+- 「全部对话」— 仅展示当前客服可见的会话
+- 「我的」— `owner_agent_id = currentAgentId AND status = HUMAN`
+- 「AI 接管」— 当前客服负责的 AI 员工下 `status = AI_ACTIVE` 的会话（主管/管理员可见，普通客服不可见）
+- 「同事对话」— 团队内其他客服正在接待的会话（需主管/管理员权限）
+
+**API 鉴权**：每个 `/api/v1/conversation/**` 请求在 Controller 层校验 `owner_agent_id` 与当前登录用户的关系，非本人/无权限直接返回 403。
+
+### 10.3 菜单权限控制
+
+采用 **RBAC 模型 + 前端路由守卫 + 后端接口鉴权** 双层控制：
+
+**角色定义**：
+
+| 角色 | 编码 | 权限范围 |
+|------|------|---------|
+| 超级管理员 | ADMIN | 全部菜单 + 全部数据 |
+| 客服主管 | LEADER | AI员工管理 / 知识库 / 客服管理 / IM工作台 / 数据看板（团队范围） |
+| 客服 | AGENT | IM工作台（仅自己会话） |
+
+**数据库表设计**：
+
+```sql
+-- 角色表
+sys_role (id, code, name, description, tenant_id)
+-- 菜单/权限表（前端路由路径 + 后端接口路径统一存储）
+sys_permission (id, parent_id, name, type: MENU/BUTTON/API, path, permission_code, icon, sort_order)
+-- 角色-权限关联
+sys_role_permission (role_id, permission_id)
+-- 用户-角色关联
+sys_user_role (user_id, role_id)
+```
+
+**前端实现**：
+- Ant Design Pro 的 `access.ts` + `Access` 组件控制菜单显隐和路由守卫
+- 登录后后端返回用户权限码列表（如 `["ai_employee:view", "ai_employee:edit", "im:access", "dashboard:view"]`）
+- 菜单配置中每个菜单项绑定 `access` 属性，前端按权限码过滤渲染
+- 按钮级别：`<Access accessible={hasPermission('ai_employee:edit')}>` 控制编辑按钮显隐
+
+**后端实现**：
+- 每个 Controller 方法加 `@PreAuthorize("hasAuthority('ai_employee:edit')")` 注解
+- 权限码中间用 `:` 分隔：`{模块}:{操作}`，如 `ai_employee:view` / `im:access` / `dashboard:view`
+
+### 10.4 性能
 
 | 指标 | 目标 | 实现方式 |
 |------|------|---------|
@@ -678,7 +777,7 @@ Phase 1 三块看板（读操作，不做实时流计算）：
 | 客服分配通知 ≤ 10s | 达标 | RocketMQ 异步推送 + WebSocket |
 | 并发 ≥ 20 路 | 达标 | Spring WebSocket 天然支持 |
 
-### 10.3 扩展性预留
+### 10.5 扩展性预留
 
 所有业务表预留 `tenant_id` 字段，当前阶段写死为 1。API 路径预留版本前缀 `/api/v1/`。配置表（UI 主题色/Logo）预留 `theme_config` JSON 字段。
 
