@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+
+langchain4j:
+  providers: []
+
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: test-group
+  consumer:
+    group: test-group
+
+elasticsearch:
+  host: localhost
+  port: 9200
+
+app:
+  storage:
+    base-path: ./target/test-data
+  security:
+    jwt-secret: test-secret-key-for-unit-tests-only
+    jwt-expiration: 3600000
