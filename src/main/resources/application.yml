@@ -66,6 +66,6 @@ app:
   storage:
     base-path: ./data
   security:
-    jwt-secret: ${JWT_SECRET:change-me-in-production}
+    jwt-secret: ${JWT_SECRET:ai-cs-default-jwt-secret-key-32c}
     jwt-expiration: 86400000
   default-tenant-id: 1
