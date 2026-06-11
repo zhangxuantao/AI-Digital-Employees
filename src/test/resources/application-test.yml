@@ -1,4 +1,7 @@
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
   datasource:
     url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
@@ -9,6 +12,9 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+
+redis:
+  enabled: false
 
 langchain4j:
   providers: []
@@ -21,6 +27,7 @@ rocketmq:
     group: test-group
 
 elasticsearch:
+  enabled: false
   host: localhost
   port: 9200
 
