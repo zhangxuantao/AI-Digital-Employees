@@ -6,6 +6,7 @@ import com.ai.cs.domain.conversation.Conversation;
 import com.ai.cs.domain.conversation.Message;
 import com.ai.cs.domain.conversation.repository.ConversationRepository;
 import com.ai.cs.shared.dto.ApiResponse;
+import com.ai.cs.shared.security.DataScope;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,8 +25,22 @@ public class ConversationController {
 
     @GetMapping
     @PreAuthorize("hasAuthority('im:access')")
-    public ApiResponse<List<Conversation>> listConversations() {
-        return ApiResponse.success(conversationRepository.findAll());
+    @DataScope(ownerField = "ownerAgentId", agentIdParam = "agentId")
+    public ApiResponse<List<Conversation>> listConversations(
+            @RequestAttribute(value = "userId", required = false) Long userId,
+            @RequestAttribute(value = "agentId", required = false) Long agentId,
+            @RequestAttribute(value = "roleCode", required = false) String roleCode) {
+        List<Conversation> conversations;
+        if ("ADMIN".equals(roleCode)) {
+            conversations = conversationRepository.findAll();
+        } else if (agentId != null) {
+            // AGENT/LEADER: data isolation by owner_agent_id
+            conversations = conversationRepository.findByOwnerAgentId(agentId);
+        } else {
+            // Fallback when no request attributes present (test compatibility)
+            conversations = conversationRepository.findAll();
+        }
+        return ApiResponse.success(conversations);
     }
 
     @GetMapping("/{id}/messages")

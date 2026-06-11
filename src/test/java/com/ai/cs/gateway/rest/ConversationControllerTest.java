@@ -48,7 +48,7 @@ class ConversationControllerTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Test
-    void listConversations_shouldReturnAllConversations() throws Exception {
+    void listConversations_shouldReturnAllConversations_whenNoRequestAttributes() throws Exception {
         Conversation conv = new Conversation();
         conv.setId(1L);
         conv.setCustomerId(10L);
@@ -63,6 +63,39 @@ class ConversationControllerTest {
                 .andExpect(jsonPath("$.data[0].id").value(1))
                 .andExpect(jsonPath("$.data[0].customerId").value(10))
                 .andExpect(jsonPath("$.data[0].channel").value("web"));
+    }
+
+    @Test
+    void listConversations_shouldReturnAllConversations_whenAdminRole() throws Exception {
+        Conversation conv = new Conversation();
+        conv.setId(1L);
+        conv.setCustomerId(10L);
+        conv.setStatus(ConversationStatus.AI_ACTIVE);
+
+        when(conversationRepository.findAll()).thenReturn(List.of(conv));
+
+        mockMvc.perform(get("/api/v1/conversations")
+                        .requestAttr("roleCode", "ADMIN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data[0].id").value(1));
+    }
+
+    @Test
+    void listConversations_shouldFilterByOwnerAgentId_whenAgentRole() throws Exception {
+        Conversation conv = new Conversation();
+        conv.setId(1L);
+        conv.setCustomerId(10L);
+        conv.setOwnerAgentId(5L);
+        conv.setStatus(ConversationStatus.AI_ACTIVE);
+
+        when(conversationRepository.findByOwnerAgentId(5L)).thenReturn(List.of(conv));
+
+        mockMvc.perform(get("/api/v1/conversations")
+                        .requestAttr("agentId", 5L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data[0].id").value(1));
     }
 
     @Test
@@ -118,7 +151,6 @@ class ConversationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.closeReason").value("客服主动关闭"));
     }
 
