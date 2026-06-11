@@ -16,7 +16,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     List<Conversation> findByEmployeeIdAndStatusNot(Long employeeId, ConversationStatus status);
 
     @Query("SELECT c FROM Conversation c WHERE c.customerId = :customerId AND c.startTime >= :since")
-    List<Conversation> findActiveByCustomerSince(@Param("customerId") Long customerId, @Param("since") String since);
+    List<Conversation> findActiveByCustomerSince(@Param("customerId") Long customerId, @Param("since") java.time.LocalDateTime since);
 
     List<Conversation> findByOwnerAgentId(Long ownerAgentId);
 
