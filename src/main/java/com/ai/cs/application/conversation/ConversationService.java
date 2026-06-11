@@ -56,14 +56,15 @@ public class ConversationService {
     }
 
     @Transactional
-    public void closeConversation(Long conversationId, String reason) {
+    public Conversation closeConversation(Long conversationId, String reason) {
         Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CONVERSATION_NOT_FOUND));
         stateMachine.transition(conv, ConversationStatus.CLOSED);
         conv.setEndTime(LocalDateTime.now());
         conv.setCloseReason(reason);
-        conversationRepository.save(conv);
+        Conversation saved = conversationRepository.save(conv);
         log.info("会话 {} 已关闭: reason={}", conversationId, reason);
+        return saved;
     }
 
     @Transactional
