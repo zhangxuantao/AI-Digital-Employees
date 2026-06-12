@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Modal, Switch, Button, Space, Input, message, Spin } from 'antd'
+import { Modal, Switch, Button, Space, Input, Select, message, Spin } from 'antd'
+import { PlusOutlined } from '@ant-design/icons'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -61,6 +62,8 @@ export default function StrategyPanel({ open, employee, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [editJson, setEditJson] = useState<string>('')
   const [editingStrategy, setEditingStrategy] = useState<ReplyStrategy | null>(null)
+  const [addingNew, setAddingNew] = useState(false)
+  const [newType, setNewType] = useState<string>('KNOWLEDGE')
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
@@ -120,6 +123,27 @@ export default function StrategyPanel({ open, employee, onClose }: Props) {
     }
   }
 
+  const handleAddStrategy = async () => {
+    if (!newType) return
+    setAddingNew(true)
+    try {
+      await saveStrategy(employee.id!, {
+        strategyType: newType,
+        configJson: '{}',
+        enabled: false,
+        sortOrder: strategies.length,
+      } as ReplyStrategy)
+      message.success('策略已添加')
+      const updated = await listStrategies(employee.id!)
+      setStrategies(updated)
+      setNewType('KNOWLEDGE')
+    } catch (e: any) {
+      message.error(e?.message ?? '添加失败')
+    } finally {
+      setAddingNew(false)
+    }
+  }
+
   const handleSaveJson = async () => {
     if (!editingStrategy) return
     try {
@@ -141,6 +165,17 @@ export default function StrategyPanel({ open, employee, onClose }: Props) {
   return (
     <Modal title={`${employee.name} — 回复策略配置`} open={open} onCancel={onClose} footer={null} width={640}
       destroyOnClose>
+      <div style={{ marginBottom: 12, display: 'flex', gap: 8 }}>
+        <Select
+          value={newType}
+          onChange={setNewType}
+          style={{ width: 140 }}
+          options={Object.entries(STRATEGY_LABELS).map(([value, label]) => ({ value, label }))}
+        />
+        <Button type="primary" icon={<PlusOutlined />} loading={addingNew} onClick={handleAddStrategy}>
+          新增策略
+        </Button>
+      </div>
       <Spin spinning={loading}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={strategies.map((s) => s.id!)} strategy={verticalListSortingStrategy}>

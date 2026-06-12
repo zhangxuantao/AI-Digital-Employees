@@ -13,7 +13,7 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         var config = new CorsConfiguration();
-        String allowedOrigin = System.getenv().getOrDefault("CORS_ALLOWED_ORIGIN", "http://localhost:3000");
+        String allowedOrigin = System.getenv().getOrDefault("CORS_ALLOWED_ORIGIN", "http://localhost:*");
         config.setAllowedOriginPatterns(List.of(allowedOrigin));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));

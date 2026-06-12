@@ -10,4 +10,5 @@ import java.util.List;
 public interface TransferRuleRepository extends JpaRepository<TransferRule, Long> {
 
     List<TransferRule> findByEmployeeIdAndEnabledOrderByPriorityAsc(Long employeeId, Boolean enabled);
+    List<TransferRule> findByEnabledOrderByPriorityAsc(Boolean enabled);
 }

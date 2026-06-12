@@ -47,12 +47,12 @@ public class AuthController {
     }
 
     @PostMapping("/ticket")
-    public ApiResponse<Map<String, Object>> getWebSocketTicket(
-            @RequestAttribute(value = "userId", required = false) Long userId) {
-        // userId from JWT filter context; fallback for test/dev
-        if (userId == null) {
+    public ApiResponse<Map<String, Object>> getWebSocketTicket() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal() == null) {
             return ApiResponse.error(401, "未登录");
         }
+        Long userId = Long.valueOf(auth.getPrincipal().toString());
         SysUser user = userRepository.findById(userId).orElse(null);
         if (user == null) {
             return ApiResponse.error(401, "用户不存在");

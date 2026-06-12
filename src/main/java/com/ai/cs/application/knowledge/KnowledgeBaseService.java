@@ -48,19 +48,18 @@ public class KnowledgeBaseService {
         // Save file
         String filePath = LocalFileStorageService.saveKnowledgeFile(kbId, file);
 
-        // Create document record
+        // Create document record (status: UPLOADED — training is separate)
         KnowledgeDocument doc = new KnowledgeDocument();
         doc.setKbId(kbId);
         doc.setFileName(originalName);
         doc.setFileType(fileType);
         doc.setFileSize(file.getSize());
         doc.setFilePath(filePath);
-        doc.setStatus("PENDING");
+        doc.setStatus("UPLOADED");
+        doc.setChunkCount(0);
         doc = docRepository.save(doc);
 
-        // Process synchronously in Phase 1 (async via RocketMQ in later phase)
-        processDocument(doc);
-
+        log.info("文档已上传: kbId={}, docId={}, fileName={}", kbId, doc.getId(), originalName);
         return doc;
     }
 

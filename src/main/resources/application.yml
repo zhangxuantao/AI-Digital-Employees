@@ -28,7 +28,7 @@ spring:
       max-request-size: 100MB
 
 server:
-  port: 8080
+  port: 8082
 
 # 自定义配置格式 — 由 LangChain4jConfig.java 手动解析（见 Task 1.5）
 langchain4j:

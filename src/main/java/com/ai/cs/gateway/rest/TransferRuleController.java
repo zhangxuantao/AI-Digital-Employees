@@ -20,8 +20,11 @@ public class TransferRuleController {
     private final TransferRuleRepository ruleRepository;
 
     @GetMapping
-    public ApiResponse<List<TransferRule>> list(@RequestParam Long employeeId) {
-        return ApiResponse.success(ruleRepository.findByEmployeeIdAndEnabledOrderByPriorityAsc(employeeId, true));
+    public ApiResponse<List<TransferRule>> list(@RequestParam(required = false) Long employeeId) {
+        if (employeeId != null) {
+            return ApiResponse.success(ruleRepository.findByEmployeeIdAndEnabledOrderByPriorityAsc(employeeId, true));
+        }
+        return ApiResponse.success(ruleRepository.findByEnabledOrderByPriorityAsc(true));
     }
 
     @PostMapping

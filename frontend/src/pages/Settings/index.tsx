@@ -85,10 +85,10 @@ function UserTab() {
     },
     {
       title: '状态',
-      dataIndex: 'enabled',
+      dataIndex: 'status',
       width: 100,
-      render: (enabled: boolean) => (
-        <Tag color={enabled ? 'success' : 'error'}>{enabled ? '启用' : '禁用'}</Tag>
+      render: (status: string) => (
+        <Tag color={status === 'ENABLED' ? 'success' : 'error'}>{status === 'ENABLED' ? '启用' : '禁用'}</Tag>
       ),
     },
   ]
