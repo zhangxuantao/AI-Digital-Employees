@@ -7,6 +7,7 @@ import AiEmployeePage from './pages/AiEmployee/index'
 import KnowledgePage from './pages/Knowledge/index'
 import AgentsPage from './pages/Agents/index'
 import TransferRulesPage from './pages/TransferRules/index'
+import IMPage from './pages/IM/index'
 import PlaceholderPage from './pages/Placeholder/index'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -33,10 +34,7 @@ function App() {
           <Route path="ai-employee" element={<AiEmployeePage />} />
           <Route path="knowledge" element={<KnowledgePage />} />
           <Route path="agents" element={<AgentsPage />} />
-          <Route
-            path="im"
-            element={<PlaceholderPage title="IM 工作台" icon="💬" description="实时会话列表、消息回复、转接关闭。" />}
-          />
+          <Route path="im" element={<IMPage />} />
           <Route path="transfer-rules" element={<TransferRulesPage />} />
           <Route
             path="settings"
