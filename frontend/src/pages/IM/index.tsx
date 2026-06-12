@@ -69,11 +69,6 @@ function getUnreadTotal(conversations: Conversation[]): number {
   return conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0)
 }
 
-function getStatusCount(conversations: Conversation[], status: string): number {
-  if (status === 'all') return conversations.length
-  return conversations.filter((c) => c.status === status).length
-}
-
 /* ============================================================
    NavPanel (leftmost 60px)
    ============================================================ */
@@ -592,7 +587,7 @@ export default function IMPage() {
   // Refs for WebSocket callback freshness
   const selectedConvIdRef = useRef(selectedConvId)
   const conversationsRef = useRef(conversations)
-  const fetchConversationsRef = useRef<() => Promise<void>>()
+  const fetchConversationsRef = useRef<(() => Promise<void>) | null>(null)
 
   selectedConvIdRef.current = selectedConvId
   conversationsRef.current = conversations
@@ -818,6 +813,11 @@ export default function IMPage() {
 
       {/* Conversation Panel */}
       <div style={{ width: 300, borderRight: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column' }}>
+        {error && (
+          <div style={{ padding: '8px 16px', background: '#fff2f0', borderBottom: '1px solid #ffccc7', color: '#ff4d4f', fontSize: 12 }}>
+            {error}
+          </div>
+        )}
         <ConversationPanel
           conversations={filteredConversations}
           selectedId={selectedConvId}
