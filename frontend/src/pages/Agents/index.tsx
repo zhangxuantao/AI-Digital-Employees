@@ -8,9 +8,10 @@ import type { ColumnsType } from 'antd/es/table'
 import {
   listAgents, createAgent, updateAgent, deleteAgent,
   listChannelPermissions, addChannelPermission, deleteChannelPermission,
-  HumanAgent, AgentChannelPermission,
 } from '../../services/agent'
-import { listEmployees, AiEmployee } from '../../services/aiEmployee'
+import type { HumanAgent, AgentChannelPermission } from '../../services/agent'
+import { listEmployees } from '../../services/aiEmployee'
+import type { AiEmployee } from '../../services/aiEmployee'
 
 const { Title, Text } = Typography
 
@@ -336,7 +337,7 @@ export default function AgentsPage() {
       title: '渠道权限',
       dataIndex: 'id',
       width: 200,
-      render: (_: any, record: HumanAgent) => {
+      render: (_: any, _record: HumanAgent) => {
         // Show tags from expandable row data — rendered as inline placeholder
         return <Tag color="default">展开查看</Tag>
       },

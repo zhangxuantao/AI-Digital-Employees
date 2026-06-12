@@ -1,20 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Typography, Layout, List, Button, Table, Input, Tag, Space, Modal,
-  Upload, Steps, Drawer, Card, message, Spin, Empty, Tooltip, Popconfirm,
+  Upload, Steps, Drawer, Card, message, Spin, Empty, Tooltip,
 } from 'antd'
 import {
   BookOutlined, PlusOutlined, UploadOutlined, InboxOutlined,
   FileOutlined, FileTextOutlined, FileImageOutlined,
   FilePdfOutlined, FileWordOutlined, FileExcelOutlined,
-  SearchOutlined, DeleteOutlined, EyeOutlined,
+  SearchOutlined, EyeOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import type { UploadFile } from 'antd/es/upload/interface'
 import {
   listKBs, createKB, uploadDoc, listDocs, listChunks,
-  KnowledgeBase, KnowledgeDocument, KnowledgeChunk,
 } from '../../services/knowledge'
+import type { KnowledgeBase, KnowledgeDocument, KnowledgeChunk } from '../../services/knowledge'
 
 const { Title, Text } = Typography
 const { Dragger } = Upload

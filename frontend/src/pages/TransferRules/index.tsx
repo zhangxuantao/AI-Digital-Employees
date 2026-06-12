@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Typography, Table, Button, Drawer, Form, Input, InputNumber, Select, Switch,
-  Checkbox, Tag, Popconfirm, message, Space, Empty, Spin, Divider, Card, Radio,
+  Checkbox, Tag, Popconfirm, message, Space, Empty, Card, Radio,
 } from 'antd'
 import { PlusOutlined, SwapOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import {
   listTransferRules, createTransferRule, updateTransferRule, deleteTransferRule,
   getAssignmentStrategy, updateAssignmentStrategy,
-  TransferRule,
 } from '../../services/transferRule'
-import { listEmployees, AiEmployee } from '../../services/aiEmployee'
+import type { TransferRule } from '../../services/transferRule'
+import { listEmployees } from '../../services/aiEmployee'
+import type { AiEmployee } from '../../services/aiEmployee'
 
 const { Title, Text } = Typography
 const { TextArea } = Input

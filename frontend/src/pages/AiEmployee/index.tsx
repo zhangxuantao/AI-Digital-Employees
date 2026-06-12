@@ -4,7 +4,7 @@ import { RobotOutlined } from '@ant-design/icons'
 import AiEmployeeList from './AiEmployeeList'
 import AiEmployeeDrawer from './AiEmployeeDrawer'
 import StrategyPanel from './StrategyPanel'
-import { AiEmployee } from '../../services/aiEmployee'
+import type { AiEmployee } from '../../services/aiEmployee'
 
 const { Title } = Typography
 

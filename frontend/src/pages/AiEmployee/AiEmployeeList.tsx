@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Table, Button, Input, Space, Tag, Popconfirm, message, Avatar } from 'antd'
 import { PlusOutlined, EditOutlined, SettingOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import { listEmployees, deleteEmployee, AiEmployee } from '../../services/aiEmployee'
+import { listEmployees, deleteEmployee } from '../../services/aiEmployee'
+import type { AiEmployee } from '../../services/aiEmployee'
 
 const STYLE_MAP: Record<string, { color: string; label: string }> = {
   PROFESSIONAL: { color: 'blue', label: '专业' },

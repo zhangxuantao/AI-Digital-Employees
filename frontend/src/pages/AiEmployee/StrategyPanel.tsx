@@ -10,8 +10,8 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import {
   listStrategies, saveStrategy, deleteStrategy, batchSortStrategies,
-  ReplyStrategy, AiEmployee,
 } from '../../services/aiEmployee'
+import type { ReplyStrategy, AiEmployee } from '../../services/aiEmployee'
 
 const STRATEGY_LABELS: Record<string, string> = {
   GREETING: '问候策略', EXCLUDE: '排除策略', MODERATION: '异常策略',

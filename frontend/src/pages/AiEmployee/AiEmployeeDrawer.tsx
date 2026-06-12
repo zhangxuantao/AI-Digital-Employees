@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 import { Drawer, Form, Input, Radio, TimePicker, InputNumber, Checkbox, Button, Space, message, Divider } from 'antd'
 import dayjs from 'dayjs'
-import { createEmployee, updateEmployee, AiEmployee } from '../../services/aiEmployee'
+import { createEmployee, updateEmployee } from '../../services/aiEmployee'
+import type { AiEmployee } from '../../services/aiEmployee'
 
 const { TextArea } = Input
 
