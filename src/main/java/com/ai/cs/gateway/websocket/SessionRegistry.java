@@ -46,4 +46,35 @@ public class SessionRegistry {
         Session session = agentSessions.get(agentId);
         return session != null && session.isOpen();
     }
+
+    /**
+     * 向指定客服推送消息
+     */
+    public void sendToAgent(Long agentId, String message) {
+        Session session = agentSessions.get(agentId);
+        if (session != null && session.isOpen()) {
+            try {
+                session.getBasicRemote().sendText(message);
+            } catch (Exception e) {
+                log.warn("推送消息失败: agentId={}", agentId, e);
+                unregister(agentId);
+            }
+        }
+    }
+
+    /**
+     * 向所有在线客服广播消息
+     */
+    public void broadcast(String message) {
+        for (Long agentId : getOnlineAgentIds()) {
+            sendToAgent(agentId, message);
+        }
+    }
+
+    /**
+     * 向所有状态为ONLINE的客服广播
+     */
+    public void broadcastToOnline(String message) {
+        broadcast(message);
+    }
 }
