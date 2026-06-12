@@ -28,44 +28,50 @@ export interface ReplyStrategy {
   sortOrder: number
 }
 
-export async function listEmployees() {
-  const res = await api.get<any, { code: number; data: AiEmployee[] }>('/ai-employees')
+export async function listEmployees(): Promise<AiEmployee[]> {
+  const res = await api.get<any, { code: number; message: string; data: AiEmployee[] }>('/ai-employees')
+  if (res.code !== 0) throw new Error(res.message)
   return res.data
 }
 
-export async function getEmployee(id: number) {
-  const res = await api.get<any, { code: number; data: AiEmployee }>(`/ai-employees/${id}`)
+export async function getEmployee(id: number): Promise<AiEmployee> {
+  const res = await api.get<any, { code: number; message: string; data: AiEmployee }>(`/ai-employees/${id}`)
+  if (res.code !== 0) throw new Error(res.message)
   return res.data
 }
 
-export async function createEmployee(data: AiEmployee) {
-  const res = await api.post<any, { code: number; data: AiEmployee }>('/ai-employees', data)
+export async function createEmployee(data: AiEmployee): Promise<AiEmployee> {
+  const res = await api.post<any, { code: number; message: string; data: AiEmployee }>('/ai-employees', data)
+  if (res.code !== 0) throw new Error(res.message)
   return res.data
 }
 
-export async function updateEmployee(id: number, data: Partial<AiEmployee>) {
-  const res = await api.put<any, { code: number; data: AiEmployee }>(`/ai-employees/${id}`, data)
+export async function updateEmployee(id: number, data: Partial<AiEmployee>): Promise<AiEmployee> {
+  const res = await api.put<any, { code: number; message: string; data: AiEmployee }>(`/ai-employees/${id}`, data)
+  if (res.code !== 0) throw new Error(res.message)
   return res.data
 }
 
-export async function deleteEmployee(id: number) {
+export async function deleteEmployee(id: number): Promise<void> {
   await api.delete(`/ai-employees/${id}`)
 }
 
-export async function listStrategies(employeeId: number) {
-  const res = await api.get<any, { code: number; data: ReplyStrategy[] }>(`/ai-employees/${employeeId}/strategies`)
+export async function listStrategies(employeeId: number): Promise<ReplyStrategy[]> {
+  const res = await api.get<any, { code: number; message: string; data: ReplyStrategy[] }>(`/ai-employees/${employeeId}/strategies`)
+  if (res.code !== 0) throw new Error(res.message)
   return res.data
 }
 
-export async function saveStrategy(employeeId: number, data: ReplyStrategy) {
-  const res = await api.post<any, { code: number; data: ReplyStrategy }>(`/ai-employees/${employeeId}/strategies`, data)
+export async function saveStrategy(employeeId: number, data: ReplyStrategy): Promise<ReplyStrategy> {
+  const res = await api.post<any, { code: number; message: string; data: ReplyStrategy }>(`/ai-employees/${employeeId}/strategies`, data)
+  if (res.code !== 0) throw new Error(res.message)
   return res.data
 }
 
-export async function deleteStrategy(employeeId: number, strategyId: number) {
+export async function deleteStrategy(employeeId: number, strategyId: number): Promise<void> {
   await api.delete(`/ai-employees/${employeeId}/strategies/${strategyId}`)
 }
 
-export async function batchSortStrategies(employeeId: number, items: { id: number; sortOrder: number }[]) {
+export async function batchSortStrategies(employeeId: number, items: { id: number; sortOrder: number }[]): Promise<void> {
   await api.patch(`/ai-employees/${employeeId}/strategies/batch-sort`, items)
 }
