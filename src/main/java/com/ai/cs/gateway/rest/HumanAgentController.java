@@ -3,6 +3,8 @@ package com.ai.cs.gateway.rest;
 import com.ai.cs.domain.assignment.HumanAgent;
 import com.ai.cs.domain.assignment.repository.HumanAgentRepository;
 import com.ai.cs.shared.dto.ApiResponse;
+import com.ai.cs.shared.exception.BusinessException;
+import com.ai.cs.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,7 +25,7 @@ public class HumanAgentController {
     public ApiResponse<List<HumanAgent>> list() { return ApiResponse.success(agentRepository.findAll()); }
 
     @GetMapping("/{id}")
-    public ApiResponse<HumanAgent> get(@PathVariable Long id) { return ApiResponse.success(agentRepository.findById(id).orElseThrow()); }
+    public ApiResponse<HumanAgent> get(@PathVariable Long id) { return ApiResponse.success(agentRepository.findById(id).orElseThrow(() -> new BusinessException(ErrorCode.AGENT_NOT_FOUND))); }
 
     @PostMapping
     @PreAuthorize("hasAuthority('agent:edit')")

@@ -27,6 +27,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(e.getCode(), e.getMessage()));
     }
 
+    @ExceptionHandler(java.util.NoSuchElementException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoSuchElement(java.util.NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(404, "资源不存在"));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()
