@@ -6,6 +6,7 @@ import {
   TeamOutlined,
   MessageOutlined,
   DashboardOutlined,
+  SwapOutlined,
   LogoutOutlined,
   UserOutlined,
   SettingOutlined,
@@ -20,6 +21,7 @@ const menuItems = [
   { key: '/ai-employee', icon: <RobotOutlined />, label: 'AI 员工', permission: 'ai_employee:view' },
   { key: '/knowledge', icon: <BookOutlined />, label: '知识库', permission: 'knowledge:view' },
   { key: '/agents', icon: <TeamOutlined />, label: '客服管理', permission: 'agent:view' },
+  { key: '/transfer-rules', icon: <SwapOutlined />, label: '转人工规则', permission: 'ai_employee:view' },
   { key: '/im', icon: <MessageOutlined />, label: 'IM 工作台', permission: 'im:access' },
 ]
 
@@ -31,6 +33,11 @@ export default function DashboardLayout() {
 
   const hasPermission = (code: string) => permissions.includes(code)
   const filteredMenu = menuItems.filter((item) => hasPermission(item.permission))
+
+  // ADMIN-only menu items
+  if (roleCode === 'ADMIN') {
+    filteredMenu.push({ key: '/settings', icon: <SettingOutlined />, label: '系统设置', permission: 'ai_employee:edit' })
+  }
 
   const handleLogout = () => {
     logout()
