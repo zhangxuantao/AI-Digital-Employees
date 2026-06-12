@@ -6,6 +6,7 @@ import DashboardPage from './pages/Dashboard/index'
 import AiEmployeePage from './pages/AiEmployee/index'
 import KnowledgePage from './pages/Knowledge/index'
 import AgentsPage from './pages/Agents/index'
+import TransferRulesPage from './pages/TransferRules/index'
 import PlaceholderPage from './pages/Placeholder/index'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -36,10 +37,7 @@ function App() {
             path="im"
             element={<PlaceholderPage title="IM 工作台" icon="💬" description="实时会话列表、消息回复、转接关闭。" />}
           />
-          <Route
-            path="transfer-rules"
-            element={<PlaceholderPage title="转人工规则" icon="🔄" description="配置关键词、情感、手动、时段四种触发规则。" />}
-          />
+          <Route path="transfer-rules" element={<TransferRulesPage />} />
           <Route
             path="settings"
             element={<PlaceholderPage title="系统设置" icon="⚙️" description="用户管理、角色管理、菜单权限配置。" />}
