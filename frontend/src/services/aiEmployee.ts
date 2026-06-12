@@ -53,7 +53,8 @@ export async function updateEmployee(id: number, data: Partial<AiEmployee>): Pro
 }
 
 export async function deleteEmployee(id: number): Promise<void> {
-  await api.delete(`/ai-employees/${id}`)
+  const res = await api.delete<any, { code: number; message: string }>(`/ai-employees/${id}`)
+  if (res.code !== 0) throw new Error(res.message)
 }
 
 export async function listStrategies(employeeId: number): Promise<ReplyStrategy[]> {

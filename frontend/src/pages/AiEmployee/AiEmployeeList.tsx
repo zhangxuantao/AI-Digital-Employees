@@ -34,9 +34,13 @@ export default function AiEmployeeList({ onEdit, onConfigStrategy, refreshKey }:
   useEffect(() => { fetchData() }, [refreshKey])
 
   const handleDelete = async (id: number) => {
-    await deleteEmployee(id)
-    message.success('已禁用')
-    fetchData()
+    try {
+      await deleteEmployee(id)
+      message.success('已禁用')
+      fetchData()
+    } catch (e: any) {
+      message.error(e?.message ?? '操作失败')
+    }
   }
 
   const filtered = data.filter((e) => !search || e.name?.includes(search))
