@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: ai-customer-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/ai_cs?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:}
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+server:
+  port: 8080
+
+# 自定义配置格式 — 由 LangChain4jConfig.java 手动解析（见 Task 1.5）
+langchain4j:
+  providers:
+    - id: qwen
+      type: openai-compatible
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      api-key: ${QWEN_API_KEY:}
+      model: qwen-plus
+    - id: deepseek
+      type: openai-compatible
+      base-url: https://api.deepseek.com
+      api-key: ${DEEPSEEK_API_KEY:}
+      model: deepseek-chat
+    - id: ollama
+      type: ollama
+      base-url: http://localhost:11434
+      model: qwen2.5:7b
+
+# 自定义配置格式 — 由 ElasticsearchConfig.java 手动解析（见 Task 1.5）
+elasticsearch:
+  host: localhost
+  port: 9200
+  username: ${ES_USERNAME:}
+  password: ${ES_PASSWORD:}
+
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: cs-producer-group
+  consumer:
+    group: cs-consumer-group
+
+app:
+  storage:
+    base-path: ./data
+  security:
+    jwt-secret: ${JWT_SECRET:ai-cs-default-jwt-secret-key-32c}
+    jwt-expiration: 86400000
+  default-tenant-id: 1
