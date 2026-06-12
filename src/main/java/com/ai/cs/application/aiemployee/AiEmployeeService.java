@@ -91,14 +91,31 @@ public class AiEmployeeService {
 
     @Transactional
     public void batchUpdateSortOrder(Long employeeId, List<SortOrderItem> items) {
+        if (items == null || items.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST, "排序项列表不能为空");
+        }
+
+        // Verify employee exists
+        getById(employeeId);
+
+        var ids = items.stream().map(SortOrderItem::id).toList();
+        var strategies = strategyRepository.findAllById(ids);
+        if (strategies.size() != ids.size()) {
+            throw new BusinessException(ErrorCode.STRATEGY_NOT_FOUND);
+        }
+        var strategyMap = strategies.stream()
+            .collect(java.util.stream.Collectors.toMap(AiEmployeeReplyStrategy::getId, java.util.function.Function.identity()));
+
         for (var item : items) {
-            AiEmployeeReplyStrategy strategy = strategyRepository.findById(item.id())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.STRATEGY_NOT_FOUND));
+            if (item.id() == null || item.sortOrder() == null) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "排序项 id 和 sortOrder 不能为空");
+            }
+            var strategy = strategyMap.get(item.id());
             if (!strategy.getEmployeeId().equals(employeeId)) {
                 throw new BusinessException(ErrorCode.BAD_REQUEST, "策略不属于该员工");
             }
             strategy.setSortOrder(item.sortOrder());
-            strategyRepository.save(strategy);
         }
+        // No save() needed - @Transactional dirty checking handles updates
     }
 }
