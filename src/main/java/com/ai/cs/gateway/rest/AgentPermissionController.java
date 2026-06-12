@@ -19,11 +19,7 @@ public class AgentPermissionController {
 
     @GetMapping
     public ApiResponse<List<AgentChannelPermission>> list(@RequestParam Long agentId) {
-        List<AgentChannelPermission> all = permissionRepo.findAll();
-        List<AgentChannelPermission> filtered = all.stream()
-                .filter(p -> p.getAgentId().equals(agentId))
-                .toList();
-        return ApiResponse.success(filtered);
+        return ApiResponse.success(permissionRepo.findByAgentId(agentId));
     }
 
     @PostMapping

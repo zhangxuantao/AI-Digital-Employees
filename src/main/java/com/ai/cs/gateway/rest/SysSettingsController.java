@@ -18,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/settings")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('ai_employee:edit')")
+@PreAuthorize("hasAuthority('ai_employee:view')")
 public class SysSettingsController {
 
     private final SysUserRepository userRepo;
