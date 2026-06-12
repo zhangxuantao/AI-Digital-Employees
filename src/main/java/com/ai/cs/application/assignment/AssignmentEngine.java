@@ -5,6 +5,7 @@ import com.ai.cs.domain.assignment.AssignmentStrategyConfig;
 import com.ai.cs.domain.assignment.HumanAgent;
 import com.ai.cs.domain.assignment.repository.AssignmentStrategyConfigRepository;
 import com.ai.cs.domain.assignment.repository.HumanAgentRepository;
+import com.ai.cs.infrastructure.mq.AssignmentNotificationProducer;
 import com.ai.cs.shared.exception.BusinessException;
 import com.ai.cs.shared.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
@@ -22,17 +23,36 @@ public class AssignmentEngine {
     private final HumanAgentRepository agentRepository;
     private final AssignmentStrategyConfigRepository strategyConfigRepository;
     private final Map<String, AssignmentStrategy> strategyMap;
+    private final CollisionDetector collisionDetector;
+    private final AssignmentNotificationProducer notificationProducer;
 
     public AssignmentEngine(HumanAgentRepository agentRepository,
                             AssignmentStrategyConfigRepository strategyConfigRepository,
-                            List<AssignmentStrategy> strategies) {
+                            List<AssignmentStrategy> strategies,
+                            CollisionDetector collisionDetector,
+                            AssignmentNotificationProducer notificationProducer) {
         this.agentRepository = agentRepository;
         this.strategyConfigRepository = strategyConfigRepository;
+        this.collisionDetector = collisionDetector;
+        this.notificationProducer = notificationProducer;
         this.strategyMap = strategies.stream()
                 .collect(Collectors.toMap(AssignmentStrategy::getType, Function.identity()));
     }
 
     public HumanAgent assign(Long employeeId, Long conversationId, Long customerId) {
+        // 0. Collision detection — check if customer already has active conversation
+        Long existingAgentId = collisionDetector.detect(customerId);
+        if (existingAgentId != null) {
+            HumanAgent existing = agentRepository.findById(existingAgentId).orElse(null);
+            if (existing != null && existing.getCurrentLoad() < existing.getMaxConcurrent()) {
+                log.info("碰单回流: customerId={}, agentId={}", customerId, existingAgentId);
+                existing.setCurrentLoad(existing.getCurrentLoad() + 1);
+                agentRepository.save(existing);
+                notificationProducer.send(existingAgentId, conversationId);
+                return existing;
+            }
+        }
+
         AssignmentStrategyConfig config = strategyConfigRepository
                 .findByEmployeeIdAndIsActive(employeeId, true)
                 .stream()
@@ -71,6 +91,8 @@ public class AssignmentEngine {
         agentRepository.save(assigned);
 
         log.info("分配结果: agentId={}, strategy={}", assigned.getId(), config.getStrategyType());
+        // Send assignment notification
+        notificationProducer.send(assigned.getId(), conversationId);
         return assigned;
     }
 
