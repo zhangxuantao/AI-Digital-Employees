@@ -1,37 +1,62 @@
 package com.ai.cs.infrastructure.cache;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
+@Slf4j
 @Service
-@ConditionalOnBean(RedisTemplate.class)
-@RequiredArgsConstructor
 public class CacheService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    @Autowired(required = false)
+    private RedisTemplate<String, Object> redisTemplate;
+
+    // In-memory fallback when Redis is not available
+    private final Map<String, Object> localCache = new ConcurrentHashMap<>();
+    private final Map<String, AtomicLong> localCounters = new ConcurrentHashMap<>();
+
+    private boolean isRedisAvailable() {
+        return redisTemplate != null;
+    }
 
     public void set(String key, Object value, Duration ttl) {
-        redisTemplate.opsForValue().set(key, value, ttl);
+        if (isRedisAvailable()) {
+            redisTemplate.opsForValue().set(key, value, ttl);
+        } else {
+            localCache.put(key, value);
+        }
     }
 
     @SuppressWarnings("unchecked")
     public <T> T get(String key) {
-        return (T) redisTemplate.opsForValue().get(key);
+        if (isRedisAvailable()) {
+            return (T) redisTemplate.opsForValue().get(key);
+        }
+        return (T) localCache.get(key);
     }
 
     public void delete(String key) {
-        redisTemplate.delete(key);
+        if (isRedisAvailable()) {
+            redisTemplate.delete(key);
+        } else {
+            localCache.remove(key);
+        }
     }
 
     public Long increment(String key) {
-        return redisTemplate.opsForValue().increment(key);
+        return increment(key, 1);
     }
 
     public Long increment(String key, long delta) {
-        return redisTemplate.opsForValue().increment(key, delta);
+        if (isRedisAvailable()) {
+            return redisTemplate.opsForValue().increment(key, delta);
+        }
+        return localCounters.computeIfAbsent(key, k -> new AtomicLong(0)).addAndGet(delta);
     }
 }

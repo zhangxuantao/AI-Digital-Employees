@@ -1,0 +1,40 @@
+# 本地开发配置 — 使用 H2 数据库，无需外部服务
+spring:
+  datasource:
+    url: jdbc:h2:mem:ai_cs;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+redis:
+  enabled: false
+
+elasticsearch:
+  enabled: false
+
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: local-group
+  consumer:
+    group: local-group
+
+logging:
+  level:
+    com.ai.cs: DEBUG
+
+app:
+  storage:
+    base-path: ./data-local
+  security:
+    jwt-secret: local-dev-secret-key-for-development-only
+    jwt-expiration: 86400000

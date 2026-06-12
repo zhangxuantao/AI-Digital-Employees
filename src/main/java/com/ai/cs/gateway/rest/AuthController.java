@@ -37,13 +37,13 @@ public class AuthController {
         List<String> permissions = getUserPermissions(user);
         String token = jwtTokenProvider.createToken(user.getId(), user.getUsername(), permissions);
 
-        return ApiResponse.success(Map.of(
-                "token", token,
-                "username", user.getUsername(),
-                "roleCode", user.getRoleCode(),
-                "agentId", user.getAgentId(),
-                "permissions", permissions
-        ));
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("token", token);
+        result.put("username", user.getUsername());
+        result.put("roleCode", user.getRoleCode());
+        result.put("agentId", user.getAgentId());
+        result.put("permissions", permissions);
+        return ApiResponse.success(result);
     }
 
     @PostMapping("/ticket")

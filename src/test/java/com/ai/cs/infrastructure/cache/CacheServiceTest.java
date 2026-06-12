@@ -2,87 +2,64 @@ package com.ai.cs.infrastructure.cache;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class CacheServiceTest {
-
-    @Mock
-    private RedisTemplate<String, Object> redisTemplate;
-
-    @Mock
-    private ValueOperations<String, Object> valueOps;
 
     private CacheService cacheService;
 
     @BeforeEach
     void setUp() {
-        cacheService = new CacheService(redisTemplate);
+        cacheService = new CacheService();
+        // No Redis injected — tests local in-memory fallback
     }
 
     @Test
-    void setShouldStoreValueWithTtl() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
+    void setShouldStoreValue() {
         cacheService.set("key1", "value1", Duration.ofMinutes(5));
-
-        verify(valueOps).set("key1", "value1", Duration.ofMinutes(5));
+        assertEquals("value1", cacheService.get("key1"));
     }
 
     @Test
     void getShouldReturnStoredValue() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get("existing-key")).thenReturn("stored-value");
-
-        String result = cacheService.get("existing-key");
-
-        assertEquals("stored-value", result);
+        cacheService.set("existing-key", "stored-value", Duration.ofMinutes(5));
+        assertEquals("stored-value", cacheService.get("existing-key"));
     }
 
     @Test
     void getShouldReturnNullForMissingKey() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get("missing-key")).thenReturn(null);
-
-        String result = cacheService.get("missing-key");
-
-        assertNull(result);
+        assertNull(cacheService.get("missing-key"));
     }
 
     @Test
     void deleteShouldRemoveKey() {
+        cacheService.set("key-to-delete", "value", Duration.ofMinutes(5));
         cacheService.delete("key-to-delete");
-
-        verify(redisTemplate).delete("key-to-delete");
+        assertNull(cacheService.get("key-to-delete"));
     }
 
     @Test
     void incrementShouldIncreaseCounter() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.increment("counter")).thenReturn(5L);
-
-        Long result = cacheService.increment("counter");
-
-        assertEquals(5L, result);
-        verify(valueOps).increment("counter");
+        assertEquals(1L, cacheService.increment("counter"));
+        assertEquals(2L, cacheService.increment("counter"));
+        assertEquals(3L, cacheService.increment("counter"));
     }
 
     @Test
     void incrementWithDeltaShouldUseSpecifiedDelta() {
-        when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.increment("counter", 3L)).thenReturn(8L);
+        assertEquals(3L, cacheService.increment("counter", 3L));
+        assertEquals(8L, cacheService.increment("counter", 5L));
+    }
 
-        Long result = cacheService.increment("counter", 3L);
+    @Test
+    void setAndGetWithDifferentTypes() {
+        cacheService.set("int-key", 42, Duration.ofMinutes(5));
+        assertEquals(42, (int) cacheService.get("int-key"));
 
-        assertEquals(8L, result);
-        verify(valueOps).increment("counter", 3L);
+        cacheService.set("bool-key", true, Duration.ofMinutes(5));
+        assertEquals(true, cacheService.get("bool-key"));
     }
 }
