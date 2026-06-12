@@ -5,6 +5,7 @@ import DashboardLayout from './layouts/DashboardLayout'
 import DashboardPage from './pages/Dashboard/index'
 import AiEmployeePage from './pages/AiEmployee/index'
 import KnowledgePage from './pages/Knowledge/index'
+import AgentsPage from './pages/Agents/index'
 import PlaceholderPage from './pages/Placeholder/index'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -30,10 +31,7 @@ function App() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="ai-employee" element={<AiEmployeePage />} />
           <Route path="knowledge" element={<KnowledgePage />} />
-          <Route
-            path="agents"
-            element={<PlaceholderPage title="客服管理" icon="👥" description="管理人工客服账号、设置渠道权限。" />}
-          />
+          <Route path="agents" element={<AgentsPage />} />
           <Route
             path="im"
             element={<PlaceholderPage title="IM 工作台" icon="💬" description="实时会话列表、消息回复、转接关闭。" />}
