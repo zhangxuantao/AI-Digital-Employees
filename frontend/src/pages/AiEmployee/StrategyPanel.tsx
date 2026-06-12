@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Modal, Switch, Button, Space, Input, message } from 'antd'
+import { Modal, Switch, Button, Space, Input, message, Spin } from 'antd'
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -81,11 +81,17 @@ export default function StrategyPanel({ open, employee, onClose }: Props) {
       } else {
         await saveStrategy(employee.id!, { ...s, enabled: true })
       }
-      const updated = await listStrategies(employee.id!)
-      setStrategies(updated)
       message.success(s.enabled ? '已禁用' : '已启用')
     } catch (e: any) {
       message.error(e?.message ?? '操作失败')
+      return
+    }
+    // Re-fetch after successful toggle (separate from toggle error handling)
+    try {
+      const updated = await listStrategies(employee.id!)
+      setStrategies(updated)
+    } catch {
+      // Silently fail — the toggle itself succeeded, UI will update on next open
     }
   }
 
@@ -104,41 +110,52 @@ export default function StrategyPanel({ open, employee, onClose }: Props) {
       message.success('排序已更新')
     } catch (e: any) {
       message.error(e?.message ?? '排序更新失败')
-      // Revert on failure
-      const fresh = await listStrategies(employee.id!)
-      setStrategies(fresh)
+      try {
+        const fresh = await listStrategies(employee.id!)
+        setStrategies(fresh)
+      } catch {
+        // Rollback fetch failed — close panel to force re-fetch on next open
+        onClose()
+      }
     }
   }
 
   const handleSaveJson = async () => {
     if (!editingStrategy) return
     try {
+      JSON.parse(editJson) // Validate JSON syntax
       await saveStrategy(employee.id!, { ...editingStrategy, configJson: editJson })
       setEditingStrategy(null)
       const updated = await listStrategies(employee.id!)
       setStrategies(updated)
       message.success('配置已保存')
     } catch (e: any) {
-      message.error(e?.message ?? '保存失败')
+      if (e instanceof SyntaxError) {
+        message.error('JSON 格式错误，请检查语法')
+      } else {
+        message.error(e?.message ?? '保存失败')
+      }
     }
   }
 
   return (
     <Modal title={`${employee.name} — 回复策略配置`} open={open} onCancel={onClose} footer={null} width={640}
       destroyOnClose>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={strategies.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
-          {strategies.map((s) => (
-            <SortableCard key={s.id} strategy={s} onToggle={handleToggle} onEdit={(st) => {
-              setEditingStrategy(st)
-              setEditJson(st.configJson)
-            }} />
-          ))}
-        </SortableContext>
-      </DndContext>
-      {strategies.length === 0 && !loading && (
-        <div style={{ textAlign: 'center', color: '#bfbfbf', padding: 40 }}>暂无策略配置</div>
-      )}
+      <Spin spinning={loading}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={strategies.map((s) => s.id!)} strategy={verticalListSortingStrategy}>
+            {strategies.map((s) => (
+              <SortableCard key={s.id} strategy={s} onToggle={handleToggle} onEdit={(st) => {
+                setEditingStrategy(st)
+                setEditJson(st.configJson)
+              }} />
+            ))}
+          </SortableContext>
+        </DndContext>
+        {strategies.length === 0 && !loading && (
+          <div style={{ textAlign: 'center', color: '#bfbfbf', padding: 40 }}>暂无策略配置</div>
+        )}
+      </Spin>
       {editingStrategy && (
         <div style={{ marginTop: 16, border: '1px solid #e8e8e8', borderRadius: 8, padding: 16 }}>
           <div style={{ fontWeight: 600, marginBottom: 8 }}>
