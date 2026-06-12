@@ -1,20 +1,40 @@
-import { Card, Typography } from 'antd'
+import { useState, useCallback } from 'react'
+import { Typography } from 'antd'
 import { RobotOutlined } from '@ant-design/icons'
+import AiEmployeeList from './AiEmployeeList'
+import AiEmployeeDrawer from './AiEmployeeDrawer'
+import StrategyPanel from './StrategyPanel'
+import { AiEmployee } from '../../services/aiEmployee'
 
-const { Title, Paragraph } = Typography
+const { Title } = Typography
 
 export default function AiEmployeePage() {
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editing, setEditing] = useState<AiEmployee | null>(null)
+  const [strategyOpen, setStrategyOpen] = useState(false)
+  const [strategyEmployee, setStrategyEmployee] = useState<AiEmployee | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const refresh = () => setRefreshKey((k) => k + 1)
+
+  const handleEdit = useCallback((employee: AiEmployee) => {
+    setEditing(employee)
+    setDrawerOpen(true)
+  }, [])
+
+  const handleConfigStrategy = useCallback((employee: AiEmployee) => {
+    setStrategyEmployee(employee)
+    setStrategyOpen(true)
+  }, [])
+
   return (
     <div>
-      <Title level={4}>
-        <RobotOutlined /> AI 员工管理
-      </Title>
-      <Card>
-        <Paragraph>AI 员工列表和配置功能将在后续版本中实现。</Paragraph>
-        <Paragraph type="secondary">
-          您可以在这里创建和管理 AI 员工，配置回复策略、知识库关联、服务时段等。
-        </Paragraph>
-      </Card>
+      <Title level={4}><RobotOutlined /> AI 员工管理</Title>
+      <AiEmployeeList onEdit={handleEdit} onConfigStrategy={handleConfigStrategy} refreshKey={refreshKey} />
+      <AiEmployeeDrawer open={drawerOpen} employee={editing} onClose={() => setDrawerOpen(false)} onSuccess={refresh} />
+      {strategyEmployee && (
+        <StrategyPanel open={strategyOpen} employee={strategyEmployee} onClose={() => setStrategyOpen(false)} />
+      )}
     </div>
   )
 }
