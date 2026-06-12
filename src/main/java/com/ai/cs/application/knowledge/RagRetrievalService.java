@@ -4,6 +4,7 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.ai.cs.infrastructure.llm.LlmService;
+import com.ai.cs.infrastructure.search.RagRetriever;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -19,11 +20,19 @@ public class RagRetrievalService {
 
     private final ElasticsearchClient esClient;
     private final LlmService llmService;
+    private final RagRetriever ragRetriever;
 
     /**
      * Hybrid retrieval: kNN vector search + BM25 keyword search, fused with RRF
      */
     public List<String> retrieve(Long kbId, String query, int topK) {
+        // Try RagRetriever first
+        try {
+            return ragRetriever.hybridSearch(kbId, query, topK);
+        } catch (Exception e) {
+            log.warn("RagRetriever调用失败，降级到直接ES查询", e);
+        }
+
         try {
             // 1. BM25 keyword search
             SearchResponse<Map> keywordResults = esClient.search(s -> s
