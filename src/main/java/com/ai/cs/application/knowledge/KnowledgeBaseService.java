@@ -8,6 +8,7 @@ import com.ai.cs.domain.knowledge.repository.KnowledgeDocumentRepository;
 import com.ai.cs.domain.knowledge.repository.KnowledgeChunkRepository;
 import com.ai.cs.infrastructure.storage.DocumentParserService;
 import com.ai.cs.infrastructure.storage.TextSplitter;
+import com.ai.cs.infrastructure.mq.DocumentTrainingProducer;
 import com.ai.cs.infrastructure.storage.LocalFileStorageService;
 import com.ai.cs.shared.exception.BusinessException;
 import com.ai.cs.shared.exception.ErrorCode;
@@ -29,6 +30,7 @@ public class KnowledgeBaseService {
     private final KnowledgeChunkRepository chunkRepository;
     private final DocumentParserService parserService;
     private final TextSplitter textSplitter;
+    private final DocumentTrainingProducer trainingProducer;
 
     public List<KnowledgeBase> listAll() { return kbRepository.findAll(); }
 
@@ -58,6 +60,9 @@ public class KnowledgeBaseService {
         doc.setStatus("UPLOADED");
         doc.setChunkCount(0);
         doc = docRepository.save(doc);
+
+        // Send async training message via RocketMQ
+        trainingProducer.send(doc.getId());
 
         log.info("文档已上传: kbId={}, docId={}, fileName={}", kbId, doc.getId(), originalName);
         return doc;
