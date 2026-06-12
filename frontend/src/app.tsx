@@ -8,7 +8,7 @@ import KnowledgePage from './pages/Knowledge/index'
 import AgentsPage from './pages/Agents/index'
 import TransferRulesPage from './pages/TransferRules/index'
 import IMPage from './pages/IM/index'
-import PlaceholderPage from './pages/Placeholder/index'
+import SettingsPage from './pages/Settings/index'
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token')
@@ -36,10 +36,7 @@ function App() {
           <Route path="agents" element={<AgentsPage />} />
           <Route path="im" element={<IMPage />} />
           <Route path="transfer-rules" element={<TransferRulesPage />} />
-          <Route
-            path="settings"
-            element={<PlaceholderPage title="系统设置" icon="⚙️" description="用户管理、角色管理、菜单权限配置。" />}
-          />
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
