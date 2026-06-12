@@ -4,6 +4,7 @@ import com.ai.cs.application.aiemployee.AiEmployeeService;
 import com.ai.cs.domain.employee.AiEmployee;
 import com.ai.cs.domain.employee.AiEmployeeReplyStrategy;
 import com.ai.cs.shared.dto.ApiResponse;
+import com.ai.cs.shared.dto.SortOrderItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +64,14 @@ public class AiEmployeeController {
     @PreAuthorize("hasAuthority('ai_employee:edit')")
     public ApiResponse<Void> deleteStrategy(@PathVariable Long employeeId, @PathVariable Long strategyId) {
         aiEmployeeService.deleteStrategy(strategyId);
+        return ApiResponse.success();
+    }
+
+    @PatchMapping("/{employeeId}/strategies/batch-sort")
+    @PreAuthorize("hasAuthority('ai_employee:edit')")
+    public ApiResponse<Void> batchSort(@PathVariable Long employeeId,
+                                       @RequestBody List<SortOrderItem> items) {
+        aiEmployeeService.batchUpdateSortOrder(employeeId, items);
         return ApiResponse.success();
     }
 }

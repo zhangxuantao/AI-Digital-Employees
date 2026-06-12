@@ -4,6 +4,7 @@ import com.ai.cs.domain.employee.AiEmployee;
 import com.ai.cs.domain.employee.AiEmployeeReplyStrategy;
 import com.ai.cs.domain.employee.repository.AiEmployeeRepository;
 import com.ai.cs.domain.employee.repository.AiEmployeeReplyStrategyRepository;
+import com.ai.cs.shared.dto.SortOrderItem;
 import com.ai.cs.shared.exception.BusinessException;
 import com.ai.cs.shared.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -86,5 +87,18 @@ public class AiEmployeeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.STRATEGY_NOT_FOUND));
         s.setEnabled(false);
         strategyRepository.save(s);
+    }
+
+    @Transactional
+    public void batchUpdateSortOrder(Long employeeId, List<SortOrderItem> items) {
+        for (var item : items) {
+            AiEmployeeReplyStrategy strategy = strategyRepository.findById(item.id())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.STRATEGY_NOT_FOUND));
+            if (!strategy.getEmployeeId().equals(employeeId)) {
+                throw new BusinessException(ErrorCode.BAD_REQUEST, "策略不属于该员工");
+            }
+            strategy.setSortOrder(item.sortOrder());
+            strategyRepository.save(strategy);
+        }
     }
 }
