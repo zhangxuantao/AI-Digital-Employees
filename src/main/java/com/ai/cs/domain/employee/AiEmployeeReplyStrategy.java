@@ -19,7 +19,7 @@ public class AiEmployeeReplyStrategy extends BaseEntity {
     @Column(name = "config_json", columnDefinition = "JSON")
     private String configJson;
 
-    @Column(name = "enabled")
+    @Column(name = "enabled", columnDefinition = "TINYINT NOT NULL DEFAULT 1")
     private Boolean enabled = true;
 
     @Column(name = "sort_order")

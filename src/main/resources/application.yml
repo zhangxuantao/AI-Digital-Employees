@@ -52,8 +52,8 @@ langchain4j:
 elasticsearch:
   host: localhost
   port: 9200
-  username: ${ES_USERNAME:}
-  password: ${ES_PASSWORD:}
+  username: ${ES_USERNAME:elastic}
+  password: ${ES_PASSWORD:io90mU2+kVg89EWOil3h}
 
 rocketmq:
   name-server: localhost:9876

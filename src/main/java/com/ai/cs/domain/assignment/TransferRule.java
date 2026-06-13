@@ -28,6 +28,6 @@ public class TransferRule extends BaseEntity {
     @Column(name = "priority")
     private Integer priority = 0;
 
-    @Column(name = "enabled")
+    @Column(name = "enabled", columnDefinition = "TINYINT NOT NULL DEFAULT 1")
     private Boolean enabled = true;
 }

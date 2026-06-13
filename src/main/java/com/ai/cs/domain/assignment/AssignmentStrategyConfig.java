@@ -19,6 +19,6 @@ public class AssignmentStrategyConfig extends BaseEntity {
     @Column(name = "config_json", columnDefinition = "JSON")
     private String configJson;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", columnDefinition = "TINYINT NOT NULL DEFAULT 0")
     private Boolean isActive = false;
 }
