@@ -18,4 +18,7 @@ public class KnowledgeBase extends BaseEntity {
 
     @Column(name = "employee_id")
     private Long employeeId;
+
+    @Transient
+    private Long documentCount;
 }

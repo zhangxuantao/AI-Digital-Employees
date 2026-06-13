@@ -77,6 +77,17 @@ public class KnowledgeChunkIndexService {
         }
     }
 
+    /** Delete all ES index entries for a knowledge base */
+    public void deleteByKbId(Long kbId) {
+        try {
+            esClient.deleteByQuery(d -> d.index(INDEX_NAME)
+                    .query(q -> q.term(t -> t.field("kb_id").value(kbId))));
+            log.info("ES索引已删除: kbId={}", kbId);
+        } catch (Exception e) {
+            log.error("ES删除索引失败: kbId={}", kbId, e);
+        }
+    }
+
     /** BM25 text search */
     public List<String> searchByKb(Long kbId, String query, int topK) {
         try {

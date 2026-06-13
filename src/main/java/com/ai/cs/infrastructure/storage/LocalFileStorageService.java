@@ -31,4 +31,37 @@ public class LocalFileStorageService {
             throw new RuntimeException("文件存储失败", e);
         }
     }
+
+    /** 删除单个文件 */
+    public static void deleteFile(String filePath) {
+        try {
+            if (filePath != null) {
+                Files.deleteIfExists(Path.of(filePath));
+                log.info("文件已删除: {}", filePath);
+            }
+        } catch (IOException e) {
+            log.error("文件删除失败: {}", filePath, e);
+        }
+    }
+
+    /** 删除知识库目录及其所有文件 */
+    public static void deleteKnowledgeDir(Long kbId) {
+        try {
+            Path dir = Path.of(basePath, "knowledge", kbId.toString());
+            if (Files.exists(dir)) {
+                try (var stream = Files.walk(dir)) {
+                    stream.sorted(java.util.Comparator.reverseOrder())
+                            .forEach(path -> {
+                                try {
+                                    Files.deleteIfExists(path);
+                                } catch (IOException ignored) {
+                                }
+                            });
+                }
+                log.info("知识库目录已删除: kbId={}", kbId);
+            }
+        } catch (IOException e) {
+            log.error("知识库目录删除失败: kbId={}", kbId, e);
+        }
+    }
 }

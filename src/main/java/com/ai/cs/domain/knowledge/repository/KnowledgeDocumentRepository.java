@@ -10,4 +10,8 @@ import java.util.List;
 public interface KnowledgeDocumentRepository extends JpaRepository<KnowledgeDocument, Long> {
 
     List<KnowledgeDocument> findByKbId(Long kbId);
+
+    long countByKbId(Long kbId);
+
+    void deleteByKbId(Long kbId);
 }
