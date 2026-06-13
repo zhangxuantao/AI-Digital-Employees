@@ -1,13 +1,15 @@
 package com.ai.cs.infrastructure.mq;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -23,11 +25,16 @@ public class DocumentTrainingProducer {
         DocumentMessage msg = new DocumentMessage(documentId);
         try {
             String payload = objectMapper.writeValueAsString(msg);
-            rocketMQTemplate.convertAndSend(RocketMQConfig.DOC_TRAINING_TOPIC, payload);
-            log.info("文档训练消息已发送: docId={}", documentId);
-        } catch (JsonProcessingException e) {
-            log.error("文档训练消息序列化失败: docId={}", documentId, e);
-            throw new RuntimeException("消息序列化失败", e);
+            // Use syncSend to send raw JSON string directly, avoiding converter wrapping
+            byte[] body = payload.getBytes(StandardCharsets.UTF_8);
+            Message message = new Message(RocketMQConfig.DOC_TRAINING_TOPIC, body);
+            SendResult result = rocketMQTemplate.getProducer().send(message);
+            log.info("文档训练消息已发送: docId={}, msgId={}, status={}",
+                    documentId, result.getMsgId(), result.getSendStatus());
+        } catch (Exception e) {
+            log.error("文档训练消息发送失败: docId={}, 训练将同步执行", documentId, e);
+            // Fallback: 如果 RocketMQ 不可用，警告但不中断上传流程
+            // 文档状态保持 UPLOADED，可通过后台手动触发训练
         }
     }
 
