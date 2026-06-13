@@ -1,17 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Typography, Layout, List, Button, Table, Input, Tag, Space, Modal,
-  Upload, Steps, Drawer, Card, message, Spin, Empty, Tooltip,
+  Upload, Steps, Drawer, Card, message, Spin, Empty, Tooltip, Popconfirm,
+  Pagination,
 } from 'antd'
 import {
   BookOutlined, PlusOutlined, UploadOutlined, InboxOutlined,
   FileOutlined, FileTextOutlined, FileImageOutlined,
   FilePdfOutlined, FileWordOutlined, FileExcelOutlined,
-  SearchOutlined, EyeOutlined,
+  SearchOutlined, EyeOutlined, DeleteOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import {
   listKBs, createKB, uploadDoc, listDocs, listChunks,
+  deleteDoc, deleteKB,
 } from '../../services/knowledge'
 import type { KnowledgeBase, KnowledgeDocument, KnowledgeChunk } from '../../services/knowledge'
 
@@ -74,6 +76,8 @@ export default function KnowledgePage() {
   const [chunkDoc, setChunkDoc] = useState<KnowledgeDocument | null>(null)
   const [chunks, setChunks] = useState<KnowledgeChunk[]>([])
   const [chunksLoading, setChunksLoading] = useState(false)
+  const [chunksPage, setChunksPage] = useState(0)
+  const [chunksTotal, setChunksTotal] = useState(0)
 
   /* Fetch KB list */
   const fetchKBs = useCallback(async () => {
@@ -155,20 +159,53 @@ export default function KnowledgePage() {
     }
   }
 
-  /* View chunks */
-  const handleViewChunks = async (doc: KnowledgeDocument) => {
-    if (!selectedKb?.id) return
-    setChunkDoc(doc)
-    setChunkDrawerOpen(true)
+  /* View chunks (paginated) */
+  const fetchChunks = async (docId: number, kbId: number, page: number) => {
     setChunksLoading(true)
     try {
-      const data = await listChunks(selectedKb.id!, doc.id!)
-      setChunks(data)
+      const data = await listChunks(kbId, docId, page, 20)
+      setChunks(data.content)
+      setChunksTotal(data.totalElements)
+      setChunksPage(data.number)
     } catch (e: any) {
       message.error(e?.message ?? '获取分片失败')
       setChunks([])
     } finally {
       setChunksLoading(false)
+    }
+  }
+
+  const handleViewChunks = async (doc: KnowledgeDocument) => {
+    if (!selectedKb?.id) return
+    setChunkDoc(doc)
+    setChunkDrawerOpen(true)
+    await fetchChunks(doc.id!, selectedKb.id!, 0)
+  }
+
+  /* Delete document */
+  const handleDeleteDoc = async (doc: KnowledgeDocument) => {
+    if (!selectedKb?.id) return
+    try {
+      await deleteDoc(selectedKb.id!, doc.id!)
+      message.success(`已删除文档: ${doc.fileName}`)
+      fetchDocs(selectedKb.id!)
+    } catch (e: any) {
+      message.error(e?.message ?? '删除文档失败')
+    }
+  }
+
+  /* Delete knowledge base */
+  const handleDeleteKB = async (kb: KnowledgeBase) => {
+    try {
+      await deleteKB(kb.id!)
+      message.success(`已删除知识库: ${kb.name}`)
+      if (selectedKb?.id === kb.id) {
+        setSelectedKb(null)
+        setDocs([])
+      }
+      fetchKBs()
+    } catch (e: any) {
+      message.error(e?.message ?? '删除知识库失败')
     }
   }
 
@@ -231,7 +268,7 @@ export default function KnowledgePage() {
     },
     {
       title: '操作',
-      width: 100,
+      width: 140,
       render: (_: any, record: KnowledgeDocument) => (
         <Space>
           <Tooltip title="查看分片">
@@ -242,6 +279,23 @@ export default function KnowledgePage() {
               onClick={() => handleViewChunks(record)}
             />
           </Tooltip>
+          <Popconfirm
+            title="确认删除"
+            description={`确定要删除 "${record.fileName}" 吗？删除后不可恢复。`}
+            onConfirm={() => handleDeleteDoc(record)}
+            okText="删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Tooltip title="删除文档">
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+              />
+            </Tooltip>
+          </Popconfirm>
         </Space>
       ),
     },
@@ -286,6 +340,25 @@ export default function KnowledgePage() {
                       border: selectedKb?.id === kb.id ? '1px solid #91caff' : '1px solid transparent',
                       marginBottom: 4,
                     }}
+                    extra={
+                      <Popconfirm
+                        title="确认删除"
+                        description={`确定要删除知识库 "${kb.name}" 吗？知识库下所有文档将被一并删除且不可恢复。`}
+                        onConfirm={(e) => { e?.stopPropagation(); handleDeleteKB(kb) }}
+                        onCancel={(e) => e?.stopPropagation()}
+                        okText="删除"
+                        cancelText="取消"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </Popconfirm>
+                    }
                   >
                     <List.Item.Meta
                       avatar={<BookOutlined style={{ fontSize: 18, color: '#1677ff' }} />}
@@ -431,51 +504,68 @@ export default function KnowledgePage() {
           {chunks.length === 0 && !chunksLoading ? (
             <Empty description="暂无分片数据" />
           ) : (
-            chunks.map((chunk, idx) => (
-              <Card
-                key={chunk.id ?? idx}
-                size="small"
-                style={{ marginBottom: 12 }}
-                title={
-                  <Space>
-                    <Text strong>分片 #{chunk.chunkIndex + 1}</Text>
-                    <Tag color={EMBEDDING_STATUS_MAP[chunk.embeddingStatus]?.color}>
-                      {EMBEDDING_STATUS_MAP[chunk.embeddingStatus]?.label ?? chunk.embeddingStatus}
-                    </Tag>
-                  </Space>
-                }
-                extra={
-                  chunk.esDocId ? (
-                    <Tooltip title={`ES ID: ${chunk.esDocId}`}>
-                      <Text copyable={{ text: chunk.esDocId }} style={{ fontSize: 12, fontFamily: 'monospace' }}>
-                        {chunk.esDocId.substring(0, 12)}...
-                      </Text>
-                    </Tooltip>
-                  ) : null
-                }
-              >
-                <div
-                  style={{
-                    background: '#fafafa',
-                    padding: 8,
-                    borderRadius: 4,
-                    maxHeight: 120,
-                    overflow: 'auto',
-                    fontSize: 13,
-                    lineHeight: 1.6,
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all',
-                  }}
+            <>
+              {chunks.map((chunk, idx) => (
+                <Card
+                  key={chunk.id ?? idx}
+                  size="small"
+                  style={{ marginBottom: 12 }}
+                  title={
+                    <Space>
+                      <Text strong>分片 #{chunk.chunkIndex + 1}</Text>
+                      <Tag color={EMBEDDING_STATUS_MAP[chunk.embeddingStatus]?.color}>
+                        {EMBEDDING_STATUS_MAP[chunk.embeddingStatus]?.label ?? chunk.embeddingStatus}
+                      </Tag>
+                    </Space>
+                  }
+                  extra={
+                    chunk.esDocId ? (
+                      <Tooltip title={`ES ID: ${chunk.esDocId}`}>
+                        <Text copyable={{ text: chunk.esDocId }} style={{ fontSize: 12, fontFamily: 'monospace' }}>
+                          {chunk.esDocId.substring(0, 12)}...
+                        </Text>
+                      </Tooltip>
+                    ) : null
+                  }
                 >
-                  {chunk.content}
-                </div>
-                <div style={{ marginTop: 8, textAlign: 'right' }}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    约 {chunk.content?.length ?? 0} 字
-                  </Text>
-                </div>
-              </Card>
-            ))
+                  <div
+                    style={{
+                      background: '#fafafa',
+                      padding: 8,
+                      borderRadius: 4,
+                      maxHeight: 120,
+                      overflow: 'auto',
+                      fontSize: 13,
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    {chunk.content}
+                  </div>
+                  <div style={{ marginTop: 8, textAlign: 'right' }}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      约 {chunk.content?.length ?? 0} 字
+                    </Text>
+                  </div>
+                </Card>
+              ))}
+              <div style={{ textAlign: 'center', marginTop: 16 }}>
+                <Pagination
+                  current={chunksPage + 1}
+                  pageSize={20}
+                  total={chunksTotal}
+                  onChange={(p) => {
+                    if (selectedKb?.id && chunkDoc?.id) {
+                      fetchChunks(chunkDoc.id, selectedKb.id, p - 1)
+                    }
+                  }}
+                  showTotal={(total) => `共 ${total} 个分片`}
+                  showSizeChanger={false}
+                  size="small"
+                />
+              </div>
+            </>
           )}
         </Spin>
       </Drawer>

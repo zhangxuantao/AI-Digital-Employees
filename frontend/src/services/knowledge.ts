@@ -60,10 +60,38 @@ export async function listDocs(kbId: number): Promise<KnowledgeDocument[]> {
   return res.data
 }
 
-export async function listChunks(kbId: number, docId: number): Promise<KnowledgeChunk[]> {
-  const res = await api.get<any, { code: number; message: string; data: KnowledgeChunk[] }>(
+export interface PageResponse<T> {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+}
+
+export async function listChunks(
+  kbId: number,
+  docId: number,
+  page = 0,
+  size = 20,
+): Promise<PageResponse<KnowledgeChunk>> {
+  const res = await api.get<any, { code: number; message: string; data: PageResponse<KnowledgeChunk> }>(
     `/knowledge-bases/${kbId}/documents/${docId}/chunks`,
+    { params: { page, size } },
   )
   if (res.code !== 0) throw new Error(res.message)
   return res.data
+}
+
+export async function deleteDoc(kbId: number, docId: number): Promise<void> {
+  const res = await api.delete<any, { code: number; message: string }>(
+    `/knowledge-bases/${kbId}/documents/${docId}`,
+  )
+  if (res.code !== 0) throw new Error(res.message)
+}
+
+export async function deleteKB(kbId: number): Promise<void> {
+  const res = await api.delete<any, { code: number; message: string }>(
+    `/knowledge-bases/${kbId}`,
+  )
+  if (res.code !== 0) throw new Error(res.message)
 }
