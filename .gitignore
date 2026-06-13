@@ -23,10 +23,13 @@
 hs_err_pid*
 replay_pid*
 
-data-dev/
 target/
 .idea/
 *.iml
+
+# 本地文件上传路径
+data-dev/
+data/
 
 # AI Coding
 .claude/
