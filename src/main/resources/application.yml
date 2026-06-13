@@ -1,3 +1,10 @@
+server:
+  port: 8082
+
+logging:
+  level:
+    com.ai.cs: DEBUG
+
 spring:
   application:
     name: ai-customer-service
@@ -27,9 +34,6 @@ spring:
       max-file-size: 50MB
       max-request-size: 100MB
 
-server:
-  port: 8083
-
 # 自定义配置格式 — 由 LangChain4jConfig.java 手动解析（见 Task 1.5）
 langchain4j:
   providers:
@@ -53,7 +57,7 @@ embedding:
   provider: qwen
   api-key: "sk-ws-H.REDXMXI.NJA8.MEQCIAUsEfcnUXh8iT9aAO_R1oj_9q4Sody0Cwih3r8-W993AiAjozyedsb0-Lrwa2g0PVoGdpO_JPImkHRhtyRT_mhjAg"
   model: "text-embedding-v4"
-  base-url: "https://dashscope.aliyuncs.com/api/v1"
+  base-url: "https://dashscope.aliyuncs.com/compatible-mode"
   dimensions: 1024
 
 # 自定义配置格式 — 由 ElasticsearchConfig.java 手动解析（见 Task 1.5）
@@ -61,7 +65,7 @@ elasticsearch:
   host: localhost
   port: 9200
   username: ${ES_USERNAME:elastic}
-  password: ${ES_PASSWORD:io90mU2+kVg89EWOil3h}
+  password: ${ES_PASSWORD:_Z-wtLxY5_KcCNvJuESS}
 
 rocketmq:
   name-server: localhost:9876
@@ -72,7 +76,7 @@ rocketmq:
 
 app:
   storage:
-    base-path: ./data
+    base-path: ./data-dev
   security:
     jwt-secret: ${JWT_SECRET:ai-cs-default-jwt-secret-key-32c}
     jwt-expiration: 86400000
