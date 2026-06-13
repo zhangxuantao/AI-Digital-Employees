@@ -4,6 +4,8 @@ import com.ai.cs.infrastructure.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import java.sql.Types;
 
 @Getter @Setter
 @Entity
@@ -19,6 +21,7 @@ public class AssignmentStrategyConfig extends BaseEntity {
     @Column(name = "config_json", columnDefinition = "JSON")
     private String configJson;
 
-    @Column(name = "is_active", columnDefinition = "TINYINT NOT NULL DEFAULT 0")
+    @Column(name = "is_active")
+    @JdbcTypeCode(Types.TINYINT)
     private Boolean isActive = false;
 }

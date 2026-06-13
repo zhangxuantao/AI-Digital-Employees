@@ -4,6 +4,8 @@ import com.ai.cs.infrastructure.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import java.sql.Types;
 
 @Getter @Setter
 @Entity
@@ -28,6 +30,7 @@ public class TransferRule extends BaseEntity {
     @Column(name = "priority")
     private Integer priority = 0;
 
-    @Column(name = "enabled", columnDefinition = "TINYINT NOT NULL DEFAULT 1")
+    @Column(name = "enabled")
+    @JdbcTypeCode(Types.TINYINT)
     private Boolean enabled = true;
 }

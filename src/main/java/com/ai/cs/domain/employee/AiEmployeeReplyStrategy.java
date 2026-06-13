@@ -4,6 +4,8 @@ import com.ai.cs.infrastructure.persistence.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import java.sql.Types;
 
 @Getter @Setter
 @Entity
@@ -19,7 +21,8 @@ public class AiEmployeeReplyStrategy extends BaseEntity {
     @Column(name = "config_json", columnDefinition = "JSON")
     private String configJson;
 
-    @Column(name = "enabled", columnDefinition = "TINYINT NOT NULL DEFAULT 1")
+    @Column(name = "enabled")
+    @JdbcTypeCode(Types.TINYINT)
     private Boolean enabled = true;
 
     @Column(name = "sort_order")
